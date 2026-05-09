@@ -7,13 +7,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "../../",
     "resolveJsonModule": true,
     "declaration": false,
     "paths": {
       "@subtrack/db": ["../../packages/db/src/index.ts"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../../packages/db/src"],
   "exclude": ["node_modules", "dist"]
 }

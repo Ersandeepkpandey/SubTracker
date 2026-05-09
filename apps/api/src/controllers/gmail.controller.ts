@@ -57,7 +57,7 @@ export async function getGmailStatus(req: AuthRequest, res: Response) {
 export async function disconnectGmail(req: AuthRequest, res: Response) {
   await prisma.user.update({
     where: { id: req.userId! },
-    data: { gmailToken: null, gmailConnected: false },
+    data: { gmailToken: undefined, gmailConnected: false },
   });
   res.json({ connected: false });
 }
