@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-geist-sans: "Geist", "DM Sans", system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-text-primary;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  * {
+    @apply border-gray-200;
+  }
+}
+
+@layer utilities {
+  .status-active {
+    @apply text-green-600 bg-green-50;
+  }
+  .status-warning {
+    @apply text-amber-600 bg-amber-50;
+  }
+  .status-danger {
+    @apply text-red-600 bg-red-50;
+  }
+}
