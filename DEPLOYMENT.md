@@ -319,6 +319,50 @@ pm2 restart all --update-env
 
 ---
 
+## Session notes (resume here next time)
+
+### What is done
+- Full deployment live at `http://194.164.151.64.nip.io`
+- Google OAuth working (nip.io domain, no Gmail scope yet)
+- Login → onboarding → dashboard all working
+- Admin dashboard UI built (`/admin` route) — code pushed to GitHub
+- `sandeepp1819@gmail.com` has `isAdmin = true` set in DB
+
+### Pending fix before admin dashboard works
+Admin page throws a server-side error because `ADMIN_SECRET` is missing from the web app env.
+
+**Fix (run on VPS):**
+```bash
+nano /var/www/subtrack/apps/web/.env.local
+```
+Add this line (same value as in `apps/api/.env`):
+```
+ADMIN_SECRET=<your_admin_secret_value>
+```
+Then rebuild and restart:
+```bash
+cd /var/www/subtrack
+pnpm --filter web build
+pm2 restart subtrack-web --update-env
+```
+Then visit `http://194.164.151.64.nip.io/admin`
+
+### Remaining feature work (not yet started)
+- [ ] Fix subscription status toggle (Pause/Resume button on subscription detail page — button exists but needs backend PATCH `/subscriptions/:id` with `{ isActive: false/true }`)
+- [ ] Fix trial days remaining in settings (API `/user/me` returns `trialDaysRemaining` — settings page already reads it, verify it displays correctly)
+- [ ] Build onboarding flow — 3-screen flow already built at `/onboarding`, verify it works end-to-end for new users
+
+### When domain is purchased
+1. Point domain DNS A record → `194.164.151.64`
+2. Update Nginx `server_name` to domain
+3. Run: `certbot --nginx -d yourdomain.com`
+4. Update all URLs in `apps/api/.env` and `apps/web/.env.local` to use `https://yourdomain.com`
+5. Update Google OAuth redirect URI in Google Console
+6. Re-enable Gmail scope in `apps/web/src/lib/auth.ts`
+7. Rebuild both apps and restart PM2
+
+---
+
 ## Port Reference
 
 | Service         | Port |
