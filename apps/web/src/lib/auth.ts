@@ -85,4 +85,26 @@ export const authOptions: NextAuthOptions = {
     error: "/login",
   },
   session: { strategy: "jwt" },
+  cookies: {
+    sessionToken: {
+      name: "next-auth.session-token",
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false },
+    },
+    callbackUrl: {
+      name: "next-auth.callback-url",
+      options: { sameSite: "lax", path: "/", secure: false },
+    },
+    csrfToken: {
+      name: "next-auth.csrf-token",
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false },
+    },
+    pkceCodeVerifier: {
+      name: "next-auth.pkce.code_verifier",
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false },
+    },
+    state: {
+      name: "next-auth.state",
+      options: { httpOnly: true, sameSite: "lax", path: "/", secure: false, maxAge: 900 },
+    },
+  },
 };
