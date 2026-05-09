@@ -9,10 +9,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "resolveJsonModule": true,
-    "declaration": false,
-    "paths": {
-      "@subtrack/db": ["../../packages/db/src/index.ts"]
-    }
+    "declaration": false
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
