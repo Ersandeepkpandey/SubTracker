@@ -20,7 +20,7 @@ export async function authMiddleware(
   try {
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!);
     const { payload } = await jwtVerify(token, secret);
-    req.userId = payload.sub as string;
+    req.userId = (payload.userId ?? payload.sub) as string;
     req.userEmail = payload.email as string;
     next();
   } catch {
