@@ -9,6 +9,7 @@ import {
   BarChart2,
   Bell,
   Settings,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +22,7 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ isAdmin }: { isAdmin?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -54,6 +55,20 @@ export function Sidebar() {
             </Link>
           );
         })}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium mb-1 transition-colors mt-2 border-t border-gray-100 pt-3",
+              pathname === "/admin"
+                ? "bg-teal-50 text-teal"
+                : "text-gray-600 hover:bg-gray-50 hover:text-text-primary"
+            )}
+          >
+            <ShieldCheck size={18} />
+            Admin
+          </Link>
+        )}
       </nav>
     </aside>
   );

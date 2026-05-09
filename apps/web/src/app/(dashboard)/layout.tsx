@@ -12,14 +12,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { trialEndsAt: true, subscriptionStatus: true, onboardingDone: true },
+    select: { trialEndsAt: true, subscriptionStatus: true, onboardingDone: true, isAdmin: true },
   });
 
   if (user && !user.onboardingDone) redirect("/onboarding");
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
+      <Sidebar isAdmin={user?.isAdmin ?? false} />
       <Header />
       <main className="ml-0 md:ml-60 pt-14 min-h-screen">
         <div className="max-w-content mx-auto px-4 md:px-6 py-6 pb-24 md:pb-6">

@@ -102,21 +102,44 @@ systemctl status nginx   # should show active (running)
 ## Step 10 — Clone the project
 
 ```bash
+# VPS path: /var/www
 cd /var/www
-git clone https://github.com/YOUR_USERNAME/subtrack.git
+git clone https://github.com/Ersandeepkpandey/SubTracker.git subtrack
 cd subtrack
 pnpm install
 ```
 
 ---
 
-## Step 11 — Create environment files
+## Step 11 — Generate secrets (on VPS)
 
-### API (`apps/api/.env`)
+```bash
+# VPS path: /var/www/subtrack
+
+# Generate NEXTAUTH_SECRET
+openssl rand -base64 32
+
+# Generate VAPID keys
+npx web-push generate-vapid-keys
+```
+
+> Copy and save both outputs — you'll need them in the env files below.
+
+---
+
+## Step 12 — Create environment files
+
+### API env — `apps/api/.env`
+```bash
+# VPS path: /var/www/subtrack
+nano apps/api/.env
+```
+
+Paste and fill in:
 ```
 PORT=4000
 DATABASE_URL=postgresql://subtrack_user:your_strong_password@localhost:5432/subtrack
-NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_SECRET=your_generated_nextauth_secret
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 WEB_URL=http://194.164.151.64:3001
@@ -125,38 +148,34 @@ GROQ_API_KEY=your_groq_api_key
 RESEND_API_KEY=your_resend_api_key
 FROM_EMAIL=your_from_email
 VAPID_EMAIL=mailto:admin@subtrack.app
-VAPID_PUBLIC_KEY=your_vapid_public_key
-VAPID_PRIVATE_KEY=your_vapid_private_key
+VAPID_PUBLIC_KEY=your_generated_vapid_public_key
+VAPID_PRIVATE_KEY=your_generated_vapid_private_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 STRIPE_PRO_PRICE_ID=your_stripe_price_id
 ADMIN_SECRET=your_admin_secret
 ```
 
-### Web (`apps/web/.env.local`)
+Save: `Ctrl+X` → `Y` → `Enter`
+
+### Web env — `apps/web/.env.local`
+```bash
+# VPS path: /var/www/subtrack
+nano apps/web/.env.local
+```
+
+Paste and fill in:
 ```
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_SECRET=your_generated_nextauth_secret
 NEXTAUTH_URL=http://194.164.151.64:3001
 NEXT_PUBLIC_API_URL=http://194.164.151.64/api
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_generated_vapid_public_key
 DATABASE_URL=postgresql://subtrack_user:your_strong_password@localhost:5432/subtrack
 ```
 
----
-
-## Step 12 — Generate secrets
-
-### NEXTAUTH_SECRET
-```bash
-openssl rand -base64 32
-```
-
-### VAPID keys
-```bash
-npx web-push generate-vapid-keys
-```
+Save: `Ctrl+X` → `Y` → `Enter`
 
 ---
 
@@ -175,31 +194,54 @@ pnpm --filter web build
 
 ---
 
+## Step 13 — Build apps
+
+```bash
+# VPS path: /var/www/subtrack
+
+# Build db package first
+pnpm --filter @subtrack/db build
+
+# Then build API
+pnpm --filter api build
+
+# Then build web
+pnpm --filter web build
+```
+
+---
+
 ## Step 14 — PM2 process config
 
-Create `/var/www/subtrack/ecosystem.config.js`:
-```js
+```bash
+# VPS path: /var/www/subtrack
+cat > /var/www/subtrack/ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [
     {
       name: "subtrack-web",
       cwd: "/var/www/subtrack/apps/web",
-      script: "node_modules/.bin/next",
+      script: "node_modules/next/dist/bin/next",
       args: "start -p 3001",
+      interpreter: "node",
       env: { NODE_ENV: "production" },
     },
     {
       name: "subtrack-api",
       cwd: "/var/www/subtrack/apps/api",
-      script: "dist/index.js",
+      script: "dist/server.js",
+      interpreter: "node",
+      env_file: "/var/www/subtrack/apps/api/.env",
       env: { NODE_ENV: "production" },
     },
   ],
 };
+EOF
 ```
 
 Start:
 ```bash
+# VPS path: /var/www/subtrack
 pm2 start ecosystem.config.js
 pm2 save
 pm2 startup   # run the printed command to enable auto-start on reboot
@@ -255,13 +297,25 @@ http://194.164.151.64
 ## Redeployment (future updates)
 
 ```bash
+# VPS path: /var/www/subtrack
 cd /var/www/subtrack
 git pull
 pnpm install
+pnpm --filter @subtrack/db build
 pnpm --filter api build
 pnpm --filter web build
-pm2 restart all
+pm2 restart all --update-env
 ```
+
+---
+
+## Important notes
+
+- `apps/api/.env` — must have correct `DATABASE_URL`, `WEB_URL=http://194.164.151.64.nip.io`
+- `apps/web/.env.local` — must have correct `NEXTAUTH_URL=http://194.164.151.64.nip.io`, `NEXT_PUBLIC_API_URL=http://194.164.151.64.nip.io/api`
+- Google OAuth redirect URI: `http://194.164.151.64.nip.io/api/auth/callback/google`
+- Gmail scope disabled until HTTPS/domain is set up
+- When you get a domain, add SSL with: `certbot --nginx -d yourdomain.com` and re-enable Gmail scope in `apps/web/src/lib/auth.ts`
 
 ---
 
