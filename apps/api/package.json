@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.15.0",
+    "@panva/hkdf": "^1.2.1",
     "@subtrack/db": "workspace:*",
     "axios": "^1.7.0",
     "cors": "^2.8.5",

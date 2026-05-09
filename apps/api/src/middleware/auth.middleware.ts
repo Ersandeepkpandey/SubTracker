@@ -1,9 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import { jwtVerify } from "jose";
+import { jwtDecrypt } from "jose";
+import { hkdf } from "@panva/hkdf";
 
 export interface AuthRequest extends Request {
   userId?: string;
   userEmail?: string;
+}
+
+async function getEncryptionKey(secret: string) {
+  return hkdf("sha256", secret, "", "NextAuth.js Generated Encryption Key", 32);
 }
 
 export async function authMiddleware(
@@ -18,8 +23,8 @@ export async function authMiddleware(
   }
 
   try {
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!);
-    const { payload } = await jwtVerify(token, secret);
+    const key = await getEncryptionKey(process.env.NEXTAUTH_SECRET!);
+    const { payload } = await jwtDecrypt(token, key);
     req.userId = (payload.userId ?? payload.sub) as string;
     req.userEmail = payload.email as string;
     next();
