@@ -10,7 +10,7 @@ async function fetchAdmin<T>(path: string): Promise<T> {
     headers: { "x-admin-key": process.env.ADMIN_SECRET ?? "" },
     cache: "no-store",
   });
-  if (!res.ok) throw new Error(`Admin fetch failed: ${path}`);
+  if (!res.ok) throw new Error(`Admin fetch failed ${res.status}: ${path}`);
   return res.json();
 }
 
@@ -24,28 +24,89 @@ export default async function AdminPage() {
   });
   if (!user?.isAdmin) redirect("/dashboard");
 
-  const [analytics, users, logs] = await Promise.all([
-    fetchAdmin<{ totalUsers: number; activeUsers: number; totalSubscriptions: number }>("/admin/analytics"),
-    fetchAdmin<Array<{
-      id: string;
-      name: string | null;
-      email: string;
-      subscriptionStatus: string;
-      gmailConnected: boolean;
-      createdAt: string;
-      trialEndsAt: string | null;
-      _count: { subscriptions: number };
-    }>>("/admin/users"),
-    fetchAdmin<Array<{
-      id: string;
-      userId: string;
-      syncedAt: string;
-      subscriptionsFound: number;
-      status: string;
-      error: string | null;
-      user: { email: string };
-    }>>("/admin/logs"),
+  const [overview, users, subscriptions, logs, notifications] = await Promise.all([
+    fetchAdmin<OverviewData>("/admin/overview"),
+    fetchAdmin<AdminUser[]>("/admin/users"),
+    fetchAdmin<AdminSub[]>("/admin/subscriptions"),
+    fetchAdmin<SyncLog[]>("/admin/logs"),
+    fetchAdmin<AdminNotif[]>("/admin/notifications"),
   ]);
 
-  return <AdminDashboard analytics={analytics} users={users} logs={logs} />;
+  return (
+    <AdminDashboard
+      overview={overview}
+      users={users}
+      subscriptions={subscriptions}
+      logs={logs}
+      notifications={notifications}
+    />
+  );
 }
+
+// ── shared types (re-exported to client) ──────────────────────────────────────
+
+export type OverviewData = {
+  totalUsers: number;
+  usersByStatus: { trial: number; active: number; expired: number; cancelled: number };
+  newUsersToday: number;
+  newUsersThisWeek: number;
+  newUsersThisMonth: number;
+  gmailConnected: number;
+  totalSubscriptions: number;
+  activeSubscriptions: number;
+  subscriptionsBySource: { manual: number; gmail: number };
+  subscriptionsByCategory: Array<{ category: string; count: number }>;
+  mrr: number;
+  notificationStats: { pending: number; sent: number; failed: number };
+  pushDevices: number;
+  recentSignups: Array<{ date: string; count: number }>;
+};
+
+export type AdminUser = {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+  subscriptionStatus: string;
+  gmailConnected: boolean;
+  onboardingDone: boolean;
+  createdAt: string;
+  trialStartedAt: string | null;
+  trialEndsAt: string | null;
+  _count: { subscriptions: number; pushDevices: number };
+};
+
+export type AdminSub = {
+  id: string;
+  serviceName: string;
+  category: string;
+  amount: string;
+  currency: string;
+  billingCycle: string;
+  renewalDate: string;
+  source: string;
+  isActive: boolean;
+  createdAt: string;
+  user: { email: string; name: string | null };
+};
+
+export type SyncLog = {
+  id: string;
+  syncedAt: string;
+  emailsScanned: number;
+  subscriptionsFound: number;
+  status: string;
+  errorMessage: string | null;
+  user: { email: string };
+};
+
+export type AdminNotif = {
+  id: string;
+  notificationType: string;
+  status: string;
+  sentAt: string | null;
+  createdAt: string;
+  reminderDays: number;
+  subscription: { serviceName: string };
+  user: { email: string };
+};
