@@ -8,6 +8,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
     "@subtrack/db": "workspace:*",
     "@tanstack/react-query": "^5.40.0",
     "axios": "^1.7.0",
